@@ -114,6 +114,7 @@ import { LMap, LTileLayer } from "vue2-leaflet";
 import { Icon, icon } from "leaflet";
 import iconUrl from "leaflet/dist/images/marker-icon.png";
 import shadowUrl from "leaflet/dist/images/marker-shadow.png";
+import Axios from "axios";
 
 export default {
   components: {
@@ -156,7 +157,24 @@ export default {
       this.selectedFranckiss = event;
     },
     downloadFranckiss: async function() {
-      const coord = await this.$getLocation();
+      let coord = null;
+      try {
+        coord = await this.$getLocation();
+      } catch (error) {
+        try {
+          coord = await Axios.get("http://ip-api.com/json/").then(response => {
+            return {
+              lat: response.data.lat,
+              lng: response.data.lon
+            };
+          });
+        } catch (error) {
+          coord = {
+            lat: "42.787788",
+            lng: "3.033359"
+          };
+        }
+      }
       db.collection("downloads")
         .add({
           date: new Date().getTime(),
