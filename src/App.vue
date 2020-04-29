@@ -16,27 +16,47 @@
             <div class="columns">
               <div class="column">
                 <figure class="image has-image-centered">
-                  <img class="image-franckiss" src="@/assets/images/franckiss_bleu.jpg" />
+                  <img
+                    class="image-franckiss"
+                    src="@/assets/images/franckiss_bleu.jpg"
+                    v-on:click="selectFranckiss"
+                  />
                 </figure>
               </div>
               <div class="column">
                 <figure class="image has-image-centered">
-                  <img class="image-franckiss" src="@/assets/images/franckiss_gris.jpg" />
+                  <img
+                    class="image-franckiss"
+                    src="@/assets/images/franckiss_gris.jpg"
+                    v-on:click="selectFranckiss"
+                  />
                 </figure>
               </div>
               <div class="column">
                 <figure class="image has-image-centered">
-                  <img class="image-franckiss" src="@/assets/images/franckiss_noir.jpg" />
+                  <img
+                    class="image-franckiss"
+                    src="@/assets/images/franckiss_noir.jpg"
+                    v-on:click="selectFranckiss"
+                  />
                 </figure>
               </div>
               <div class="column">
                 <figure class="image has-image-centered">
-                  <img class="image-franckiss" src="@/assets/images/franckiss_orange.jpg" />
+                  <img
+                    class="image-franckiss"
+                    src="@/assets/images/franckiss_orange.jpg"
+                    v-on:click="selectFranckiss"
+                  />
                 </figure>
               </div>
               <div class="column">
                 <figure class="image has-image-centered">
-                  <img class="image-franckiss" src="@/assets/images/franckiss_vert.jpg" />
+                  <img
+                    class="image-franckiss"
+                    src="@/assets/images/franckiss_vert.jpg"
+                    v-on:click="selectFranckiss"
+                  />
                 </figure>
               </div>
             </div>
@@ -127,10 +147,14 @@ export default {
   mounted() {
     const storageId = localStorage.getItem("franckissId");
     if (storageId) {
-      alert("T'as déjà ton Franckiss!");
+      console.log("T'as déjà ton Franckiss!");
     }
   },
   methods: {
+    selectFranckiss: function(event) {
+      //   event.srcElement.classList.add("animated", "rollOut");
+      this.selectedFranckiss = event;
+    },
     downloadFranckiss: async function() {
       const coord = await this.$getLocation();
       db.collection("downloads")
@@ -152,13 +176,17 @@ export default {
 </script>
 
 <style>
-html {
+body::-webkit-scrollbar {
   /* scrollbar */
-  overflow-y: hidden;
+  width: 0.25rem;
 }
 
-.image-franckiss {
-  border-radius: 60px;
+body::-webkit-scrollbar-track {
+  background: white;
+}
+
+body::-webkit-scrollbar-thumb {
+  background: #6649b8;
 }
 
 .loader-background {
@@ -177,8 +205,16 @@ html {
   margin-top: -2em;
 }
 
-.franckissImage {
-  background-image: src("@/assets/images/franckiss_bleu.jpg");
+.image-franckiss {
+  border-radius: 50%;
+  transition: all 500ms;
+}
+
+.image-franckiss:hover {
+  box-shadow: rgba(2, 8, 20, 0.1) 0px 0.35em 1.175em,
+    rgba(2, 8, 20, 0.08) 0px 0.175em 0.5em;
+  transform: translateY(-3px) scale(1.02);
+  cursor: pointer;
 }
 
 .has-image-centered {
