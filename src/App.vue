@@ -3,27 +3,51 @@
     <section class="hero is-bold is-fullheight">
       <div>
         <div v-if="storageId" class="hero-head">
-          <h1 class="title has-text-centered">Thank's for joining the event</h1>
-          <h2 class="subtitle has-text-centered">You are the {{franckissNumber}} participant</h2>
+          <h1 class="title has-text-white has-text-centered">Thank's for joining the event</h1>
+          <h2
+            class="subtitle has-text-white has-text-centered"
+          >You are the {{franckissNumber}} participant</h2>
         </div>
         <div class="hero-body" v-bind:style="[storageId ? {'height': '90vh'} : {'height': '96vh'}]">
           <div v-if="!storageId" class="container">
             <div class="columns is-8 is-vcentered">
               <div class="column">
                 <div class="title-wrapper">
-                  <h1 class="title">FRANCKISS The World</h1>
-                  <h2 class="subtitle">
+                  <h1 class="title has-text-white">FRANCKISS The World</h1>
+                  <h2 class="subtitle has-text-white">
                     A Wolrd wilde
-                    <i>art</i> event
+                    <i class="yellow">art</i> event
                   </h2>
                 </div>
-                <div class="infos-wrapper">
+                <div class="infos-wrapper has-text-white">
                   <p>Résistons ensemble à l'isolement en partageant un baiser créé par un artiste et regardons sa progression grâce à un compteur sur une carte mondiale</p>
                 </div>
                 <div class="progress-wrapper">
-                  <p class="has-text-centered">{{listFranckiss.length}} franckiss partagés!</p>
+                  <div v-if="listFranckiss.length > 0" class="title is-3 has-text-centered">
+                    <span>Real time counter :</span>
+                    <div
+                      v-for="counterItem in totalNumberAsArray"
+                      v-bind:key="counterItem.realIndex"
+                      class="list-numbers"
+                    >
+                      <transition name="counter" mode="out-in">
+                        <span
+                          :key="'counterItemA-' + counterItem.realIndex"
+                          v-if="counterItem.numberA != null"
+                          style="display: block"
+                          class="has-text-white"
+                        >{{counterItem.numberA}}</span>
+                        <span
+                          :key="'counterItemB-' + counterItem.realIndex"
+                          v-else
+                          style="display: block"
+                          class="has-text-white"
+                        >{{counterItem.numberB}}</span>
+                      </transition>
+                    </div>
+                  </div>
                   <progress
-                    class="progress"
+                    class="progress is-warning"
                     :value="listFranckiss.length"
                     max="100"
                   >{{listFranckiss.length}}</progress>
@@ -41,7 +65,7 @@
             </div>
           </div>
           <div v-else class="container">
-            <div class="box" style="height: 60vh">
+            <div class="box animated fadeIn" style="height: 60vh">
               <l-map :zoom="zoom" :center="center" ref="leafletmap">
                 <l-tile-layer :url="url"></l-tile-layer>
                 <v-marker-cluster
@@ -68,11 +92,13 @@
                     :key="'counterItemA-' + counterItem.realIndex"
                     v-if="counterItem.numberA != null"
                     style="display: block"
+                    class="has-text-white"
                   >{{counterItem.numberA}}</span>
                   <span
                     :key="'counterItemB-' + counterItem.realIndex"
                     v-else
                     style="display: block"
+                    class="has-text-white"
                   >{{counterItem.numberB}}</span>
                 </transition>
               </div>
@@ -226,6 +252,7 @@ export default {
 
 html,
 body {
+  color: white;
   padding: 0;
   margin: 0;
 }
@@ -239,6 +266,10 @@ a {
   color: #ffdd57;
 }
 
+.yellow {
+  color: #ffdd57;
+}
+
 .title-wrapper {
   font-family: "ITC_Kabel";
   margin: 2rem;
@@ -249,7 +280,7 @@ a {
 }
 
 #app {
-  background-color: #d33f22;
+  background-color: #9c1a00;
 }
 
 .loader-background {
