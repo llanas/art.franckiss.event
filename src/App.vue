@@ -1,9 +1,13 @@
 <template>
   <div id="app">
-    <section id="content" class="hero is-fullheight is-bold">
-      <div v-if="!storageId">
-        <div class="hero-body">
-          <div class="container">
+    <section class="hero is-bold is-fullheight">
+      <div>
+        <div v-if="storageId" class="hero-head">
+          <h1 class="title has-text-centered">Thank's for joining the event</h1>
+          <h2 class="subtitle has-text-centered">You are the {{franckissNumber}} participant</h2>
+        </div>
+        <div class="hero-body" v-bind:style="[storageId ? {'height': '90vh'} : {'height': '96vh'}]">
+          <div v-if="!storageId" class="container">
             <div class="columns is-8 is-vcentered">
               <div class="column">
                 <div class="title-wrapper">
@@ -36,6 +40,44 @@
               </div>
             </div>
           </div>
+          <div v-else class="container">
+            <div class="box" style="height: 60vh">
+              <l-map :zoom="zoom" :center="center" ref="leafletmap">
+                <l-tile-layer :url="url"></l-tile-layer>
+                <v-marker-cluster
+                  v-if="listFranckiss.length > 0"
+                  :options="franckissClusterOptions"
+                >
+                  <l-marker
+                    v-for="markFranckiss in listFranckiss"
+                    :key="markFranckiss.id"
+                    :lat-lng="markFranckiss.location"
+                    :icon="franckissIcon"
+                  ></l-marker>
+                </v-marker-cluster>
+              </l-map>
+            </div>
+            <div v-if="listFranckiss.length > 0" class="title is-3 has-text-centered">
+              <div
+                v-for="counterItem in totalNumberAsArray"
+                v-bind:key="counterItem.realIndex"
+                class="list-numbers"
+              >
+                <transition name="counter" mode="out-in">
+                  <span
+                    :key="'counterItemA-' + counterItem.realIndex"
+                    v-if="counterItem.numberA != null"
+                    style="display: block"
+                  >{{counterItem.numberA}}</span>
+                  <span
+                    :key="'counterItemB-' + counterItem.realIndex"
+                    v-else
+                    style="display: block"
+                  >{{counterItem.numberB}}</span>
+                </transition>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="hero-foot">
           <div class="container has-text-centered">
@@ -47,55 +89,37 @@
           </div>
         </div>
       </div>
-      <div v-else>
-        <div class="hero-head">
-          <h1 class="title has-text-centered">Thank's for joining the event</h1>
-          <h2 class="subtitle has-text-centered">You are the {{franckissNumber}} participant</h2>
-        </div>
-        <div class="hero-body">
-          <div class="container" style="height: 800px">
-            <l-map style="height: 80%; width: 100%" :zoom="zoom" :center="center" ref="leafletmap">
-              <l-tile-layer :url="url"></l-tile-layer>
-              <v-marker-cluster v-if="listFranckiss.length > 0" :options="franckissClusterOptions">
-                <l-marker
-                  v-for="markFranckiss in listFranckiss"
-                  :key="markFranckiss.id"
-                  :lat-lng="markFranckiss.location"
-                  :icon="franckissIcon"
-                ></l-marker>
-              </v-marker-cluster>
-            </l-map>
-            <h1
-              v-if="listFranckiss.length > 0"
-              class="title is-3 has-text-centered"
-            >{{listFranckiss.length}} franckiss partagés!</h1>
-            <progress
-              class="progress"
-              :value="listFranckiss.length"
-              max="100"
-            >{{listFranckiss.length}}</progress>
-          </div>
-        </div>
-        <div class="hero-foot">
-          <div class="container has-text-centered">
-            <p>
-              <strong>FRANCKISS</strong> by
-              <a href="https://github.com/llanas">Llanas</a>.
-            </p>
-          </div>
-        </div>
-      </div>
     </section>
   </div>
 </template>
 
 <script>
-import { database } from "./firebase";
 import { LMap, LTileLayer } from "vue2-leaflet";
 import { Icon, icon, DivIcon, Point } from "leaflet";
 import { animated, getGeolocation } from "./utils";
 import iconUrl from "leaflet/dist/images/marker-icon.png";
 import shadowUrl from "leaflet/dist/images/marker-shadow.png";
+import FirebaseService from "./firebase.service";
+
+class counterItem {
+  constructor(realIndex) {
+    this.realIndex = realIndex;
+    this.actualNumber = 0;
+    this.numberA = 0;
+    this.numberB = null;
+  }
+
+  setNewNumber(newNumber) {
+    if (this.numberB === null) {
+      this.numberB = newNumber;
+      this.numberA = null;
+    } else {
+      this.numberA = newNumber;
+      this.numberB = null;
+    }
+    this.actualNumber = newNumber;
+  }
+}
 
 export default {
   components: {
@@ -108,6 +132,15 @@ export default {
       Object.assign({}, Icon.Default.prototype.options, { iconUrl, shadowUrl })
     );
     return {
+      totalNumberAsArray: [
+        new counterItem(7),
+        new counterItem(6),
+        new counterItem(5),
+        new counterItem(4),
+        new counterItem(3),
+        new counterItem(2),
+        new counterItem(1)
+      ],
       franckissNumber: null,
       storageId: this.storageId,
       listFranckiss: [],
@@ -136,9 +169,7 @@ export default {
     }
   },
   created() {
-    database
-      .ref("downloads")
-      .on("child_added", this.addNewFranckiss.bind(this));
+    FirebaseService.getAllFranckiss(this.addNewFranckiss.bind(this));
   },
   methods: {
     addNewFranckiss: function(newFranckiss) {
@@ -147,26 +178,29 @@ export default {
         this.franckissNumber = this.listFranckiss.length;
       }
       this.listFranckiss.push(franckissData);
+      let arrayNumbers = (this.listFranckiss.length + "")
+        .padStart(7, "0")
+        .split("");
+      let startChangingIndex = this.totalNumberAsArray.length - 1;
+      for (let i = 0; i < this.totalNumberAsArray.length; i++) {
+        if (arrayNumbers[i] != this.totalNumberAsArray[i].actualNumber) {
+          if (i < startChangingIndex) {
+            startChangingIndex = i;
+          }
+          if (i >= startChangingIndex) {
+            this.totalNumberAsArray[i].setNewNumber(arrayNumbers[i]);
+          }
+        }
+      }
     },
     selectFranckiss: function(event) {
-      animated(event.srcElement, "tada", this.downloadFranckiss);
+      animated(event.srcElement, ["tada", "slow"], this.downloadFranckiss);
     },
     downloadFranckiss: async function() {
       const coord = await getGeolocation();
-      let newDownload = database.ref("downloads").push();
-      newDownload
-        .set({
-          date: new Date().getTime(),
-          location: {
-            lat: coord.lat,
-            lng: coord.lng
-          }
-        })
-        .then(() => {
-          localStorage.setItem("franckissId", newDownload.key);
-          this.storageId = newDownload.key;
-          this.franckissLabel = this.label;
-        });
+      let newDownload = await FirebaseService.createNewFranckiss(coord);
+      localStorage.setItem("franckissId", newDownload.key);
+      this.storageId = newDownload.key;
     }
   }
 };
@@ -183,6 +217,13 @@ export default {
   src: url("assets/fonts/Roboto/Roboto-Regular.ttf");
 }
 
+@media screen and (min-height: 900) {
+  html,
+  body {
+    overflow: hidden;
+  }
+}
+
 html,
 body {
   padding: 0;
@@ -194,21 +235,8 @@ body {
   font-weight: 300;
 }
 
-body::-webkit-scrollbar {
-  /* scrollbar */
-  width: 0.25rem;
-}
-
-body::-webkit-scrollbar-track {
-  background: white;
-}
-
-body::-webkit-scrollbar-thumb {
-  background: #6649b8;
-}
-
-.hero-body {
-  min-height: 96vh;
+a {
+  color: #ffdd57;
 }
 
 .title-wrapper {
@@ -220,8 +248,8 @@ body::-webkit-scrollbar-thumb {
   margin: 2rem 0;
 }
 
-#content {
-  background-color: #d36d22;
+#app {
+  background-color: #d33f22;
 }
 
 .loader-background {
@@ -248,7 +276,9 @@ body::-webkit-scrollbar-thumb {
 }
 
 .image-franckiss:hover {
-  transform: translateY(-3px) scale(1.02);
+  box-shadow: rgba(2, 8, 20, 0.1) 0px 0.35em 1.175em,
+    rgba(2, 8, 20, 0.08) 0px 0.175em 0.5em;
+  transform: translateY(-5px) scale(1.05);
   cursor: pointer;
 }
 
@@ -263,6 +293,25 @@ body::-webkit-scrollbar-thumb {
   border-radius: 50%;
   -moz-border-radius: 50%;
   -webkit-border-radius: 50%;
+}
+
+.list-numbers {
+  display: inline-block;
+  margin-right: 10px;
+}
+
+.counter-enter-active,
+.counter-leave-active {
+  transition: all 1s;
+}
+.counter-enter {
+  opacity: 0;
+  transform: translateY(-30px);
+}
+
+.counter-leave-to /* .counter-leave-active below version 2.1.8 */ {
+  opacity: 0;
+  transform: translateY(30px);
 }
 
 footer {
