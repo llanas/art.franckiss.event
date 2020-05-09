@@ -3,15 +3,16 @@
     <section class="hero is-bold is-fullheight">
       <div>
         <div v-if="storageId" class="hero-head">
-          <h1 class="title has-text-white has-text-centered">Thank's for joining the event</h1>
-          <h2
-            class="subtitle has-text-white has-text-centered"
-          >You are the {{franckissNumber}} participant</h2>
+          <h1 class="title has-text-white has-text-centered">Thanks for joining the Franckiss event</h1>
+          <h2 class="subtitle has-text-white has-text-centered">
+            You are the Franckiss n°
+            <i class="yellow">{{franckissNumber}}</i>
+          </h2>
         </div>
         <div class="hero-body" v-bind:style="[storageId ? {'height': '90vh'} : {'height': '96vh'}]">
           <div v-if="!storageId" class="container">
-            <div class="columns is-8 is-vcentered">
-              <div class="column">
+            <div class="columns is-8">
+              <div class="column is-three-fifths">
                 <div class="title-wrapper">
                   <h1 class="title has-text-white">FRANCKISS The World</h1>
                   <h2 class="subtitle has-text-white">
@@ -19,46 +20,80 @@
                     <i class="yellow">art</i> event
                   </h2>
                 </div>
-                <div class="infos-wrapper has-text-white">
-                  <p>Résistons ensemble à l'isolement en partageant un baiser créé par un artiste et regardons sa progression grâce à un compteur sur une carte mondiale</p>
+                <div class="has-text-white">
+                  <transition
+                    name="infosTransition"
+                    mode="out-in"
+                    enter-active-class="animated fadeIn"
+                    leave-active-class="animated fadeOut"
+                  >
+                    <span v-bind:key="langageIndex">{{infos}}</span>
+                  </transition>
                 </div>
+
                 <div class="progress-wrapper">
-                  <div v-if="listFranckiss.length > 0" class="title is-3 has-text-centered">
-                    <span>Real time counter :</span>
-                    <div
-                      v-for="counterItem in totalNumberAsArray"
-                      v-bind:key="counterItem.realIndex"
-                      class="list-numbers"
+                  <div class="is-hidden-mobile animated fadeIn" style="height: 30vh">
+                    <l-map
+                      id="mapSmall"
+                      :zoom="zoomSmall"
+                      :center="centerSmall"
+                      :options="{ zoomControl: false, dragging: false }"
+                      ref="leafletmap"
                     >
-                      <transition name="counter" mode="out-in">
-                        <span
-                          :key="'counterItemA-' + counterItem.realIndex"
-                          v-if="counterItem.numberA != null"
-                          style="display: block"
-                          class="has-text-white"
-                        >{{counterItem.numberA}}</span>
-                        <span
-                          :key="'counterItemB-' + counterItem.realIndex"
-                          v-else
-                          style="display: block"
-                          class="has-text-white"
-                        >{{counterItem.numberB}}</span>
-                      </transition>
-                    </div>
+                      <l-tile-layer :url="url"></l-tile-layer>
+                      <!-- <v-marker-cluster
+                        v-if="listFranckiss.length > 0"
+                        :options="franckissClusterOptions"
+                      >-->
+                      <l-marker
+                        v-for="markFranckiss in listFranckiss"
+                        :key="markFranckiss.id"
+                        :lat-lng="markFranckiss.location"
+                        :icon="franckissIcon"
+                      ></l-marker>
+                      <!-- </v-marker-cluster> -->
+                    </l-map>
                   </div>
-                  <progress
-                    class="progress is-warning"
-                    :value="listFranckiss.length"
-                    max="100"
-                  >{{listFranckiss.length}}</progress>
+                  <div>
+                    <span>Already</span>
+                    <div v-if="listFranckiss.length > 0" style="display: inline-block">
+                      <div
+                        v-for="counterItem in totalNumberAsArray"
+                        v-bind:key="counterItem.realIndex"
+                        class="list-numbers"
+                      >
+                        <transition name="counter" mode="out-in">
+                          <span
+                            :key="'counterItemA-' + counterItem.realIndex"
+                            v-if="counterItem.numberA != null"
+                            style="display: block"
+                            class="has-text-white"
+                          >{{counterItem.numberA}}</span>
+                          <span
+                            :key="'counterItemB-' + counterItem.realIndex"
+                            v-else
+                            style="display: block"
+                            class="has-text-white"
+                          >{{counterItem.numberB}}</span>
+                        </transition>
+                      </div>
+                    </div>
+                    <span>Franckiss downloaded!</span>
+                  </div>
                 </div>
               </div>
               <div class="column">
+                <div class="subtitle has-text-centered has-text-white">
+                  <i class="yellow">Click</i> on the Franckiss to join the event!
+                </div>
                 <figure class="image has-image-centered">
                   <img
+                    id="franckissImage"
                     class="image-franckiss"
-                    src="@/assets/images/franckiss_orange.jpg"
+                    src="@/assets/images/franckiss_orange_small.jpg"
                     v-on:click="selectFranckiss"
+                    @mouseenter="hoverFranckiss = true"
+                    @mouseleave="hoverFranckiss = false"
                   />
                 </figure>
               </div>
@@ -66,7 +101,7 @@
           </div>
           <div v-else class="container">
             <div class="box animated fadeIn" style="height: 60vh">
-              <l-map :zoom="zoom" :center="center" ref="leafletmap">
+              <l-map :zoom="zoomLarge" :center="centerLarge" ref="leafletmap">
                 <l-tile-layer :url="url"></l-tile-layer>
                 <v-marker-cluster
                   v-if="listFranckiss.length > 0"
@@ -110,8 +145,7 @@
             More informations on
             <a href="http://franckiss.art" target="_blank">
               <strong>FRANCKISS.art</strong>
-            </a> - Website created by
-            <a href="https://github.com/llanas">Llanas</a>.
+            </a> - A Miguel PIN.
           </div>
         </div>
       </div>
@@ -121,10 +155,8 @@
 
 <script>
 import { LMap, LTileLayer } from "vue2-leaflet";
-import { Icon, icon, DivIcon, Point } from "leaflet";
+import { icon, DivIcon, Point } from "leaflet";
 import { animated, getGeolocation } from "./utils";
-import iconUrl from "leaflet/dist/images/marker-icon.png";
-import shadowUrl from "leaflet/dist/images/marker-shadow.png";
 import FirebaseService from "./firebase.service";
 
 class counterItem {
@@ -154,10 +186,14 @@ export default {
     // LMarker
   },
   data() {
-    let customicon = icon(
-      Object.assign({}, Icon.Default.prototype.options, { iconUrl, shadowUrl })
-    );
+    let customicon = icon({
+      iconUrl: require("@/assets/images/franckiss_orange_icon.png"),
+      className: "franckissClusterGroupIcon",
+      iconSize: [20, 20]
+    });
     return {
+      langageIndex: 0,
+      hoverFranckiss: false,
       totalNumberAsArray: [
         new counterItem(7),
         new counterItem(6),
@@ -171,8 +207,10 @@ export default {
       storageId: this.storageId,
       listFranckiss: [],
       url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-      zoom: 3,
-      center: [47.41322, -1.219482],
+      zoomLarge: 3,
+      zoomSmall: 2,
+      centerLarge: [47.41322, -1.219482],
+      centerSmall: [34.991022, -33.871539],
       franckissIcon: customicon,
       franckissClusterOptions: {
         showCoverageOnHover: false,
@@ -193,15 +231,35 @@ export default {
     if (this.storageId) {
       console.log("T'as déjà ton Franckiss!");
     }
+    setInterval(
+      function() {
+        this.langageIndex = (this.langageIndex + 1) % 3;
+      }.bind(this),
+      3000
+    );
   },
   created() {
     FirebaseService.getAllFranckiss(this.addNewFranckiss.bind(this));
+  },
+  computed: {
+    infos: function() {
+      switch (this.langageIndex) {
+        case 0:
+          return "LOVE CAN'T WAIT LET'S COVER THE WORLD WITH KISSES";
+        case 1:
+          return "L'AMOUR NE PEUT PAS ATTENDRE RECOUVRONS LE MONDE DE BAISERS";
+        case 2:
+          return "EL AMOR NO PUEDE ESPERAR MAS CUBRAMOS EL MUNDO CON BESOS";
+        default:
+          return "LOVE CAN'T WAIT LET'S COVER THE WORLD WITH KISSES";
+      }
+    }
   },
   methods: {
     addNewFranckiss: function(newFranckiss) {
       const franckissData = newFranckiss.val();
       if (newFranckiss.key == this.storageId) {
-        this.franckissNumber = this.listFranckiss.length;
+        this.franckissNumber = franckissData.number;
       }
       this.listFranckiss.push(franckissData);
       let arrayNumbers = (this.listFranckiss.length + "")
@@ -224,9 +282,18 @@ export default {
     },
     downloadFranckiss: async function() {
       const coord = await getGeolocation();
-      let newDownload = await FirebaseService.createNewFranckiss(coord);
+      const index = this.listFranckiss.length + 1;
+      let newDownload = await FirebaseService.createNewFranckiss(coord, index);
       localStorage.setItem("franckissId", newDownload.key);
-      this.storageId = newDownload.key;
+      setTimeout(() => {
+        this.storageId = newDownload.key;
+        this.franckissNumber = index;
+        const link = document.createElement("a");
+        link.href = document.getElementById("franckissImage").src;
+        link.setAttribute("download", `franckiss_${this.franckissNumber}.jpg`); //or any other extension
+        document.body.appendChild(link);
+        link.click();
+      }, 1000);
     }
   }
 };
@@ -276,11 +343,20 @@ a {
 }
 
 .infos-wrapper {
-  margin: 2rem 0;
+  /* margin: 2rem 0;
+  padding-left: 4rem; */
+}
+
+.infos-wrapper > * {
+  /* margin-top: 1rem; */
 }
 
 #app {
-  background-color: #9c1a00;
+  background-color: #d45c16;
+}
+
+#mapSmall {
+  border-radius: 20px;
 }
 
 .loader-background {
@@ -309,7 +385,7 @@ a {
 .image-franckiss:hover {
   box-shadow: rgba(2, 8, 20, 0.1) 0px 0.35em 1.175em,
     rgba(2, 8, 20, 0.08) 0px 0.175em 0.5em;
-  transform: translateY(-5px) scale(1.05);
+  transform: translateY(-5px) scale(1.1);
   cursor: pointer;
 }
 
@@ -319,8 +395,8 @@ a {
 }
 
 .franckissClusterGroupIcon {
-  background-color: rgb(177, 226, 86);
-  border: 1px solid rgb(63, 146, 194);
+  background-color: rgb(228, 18, 70);
+  border: 1px solid rgb(210, 90, 20);
   border-radius: 50%;
   -moz-border-radius: 50%;
   -webkit-border-radius: 50%;

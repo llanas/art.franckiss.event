@@ -26,11 +26,12 @@ class FirebaseService {
         this.databaseDownloads.on("child_added", callback);
     }
 
-    async createNewFranckiss({ lat, lng }) {
+    async createNewFranckiss({ lat, lng }, index) {
         const newFranckiss = this.databaseDownloads.push();
         return newFranckiss.set({
             date: new Date().getTime(),
-            location: { lat, lng }
+            location: { lat, lng },
+            number: index
         })
             .then(() => {
                 return newFranckiss;
