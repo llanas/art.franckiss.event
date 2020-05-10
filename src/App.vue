@@ -183,7 +183,7 @@ class counterItem {
 
 const listFranckissSounds = [
   1,
-  2,
+  3,
   4,
   5,
   6,
@@ -278,7 +278,7 @@ export default {
           };
         case 2:
           return {
-            a: "EL AMOR NO PUEDE ESPERAR MAS",
+            a: "EL AMOR NO PUEDE ESPERAR MÁS",
             b: "LLENEMOS EL MUNDO DE BESOS"
           };
         default:
