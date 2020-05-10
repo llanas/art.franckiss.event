@@ -5,6 +5,7 @@ import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import Vue from 'vue';
 import VueGeolocation from 'vue-browser-geolocation';
+import Meta from 'vue-meta';
 import { LMap, LMarker, LPopup, LTileLayer } from 'vue2-leaflet';
 import Vue2LeafletMarkerCluster from 'vue2-leaflet-markercluster';
 import { firestorePlugin } from 'vuefire';
@@ -16,6 +17,7 @@ Vue.use(firestorePlugin)
 Vue.component('v-marker-cluster', Vue2LeafletMarkerCluster);
 
 Vue.use(VueGeolocation);
+Vue.use(Meta);
 
 library.add(faSpinner);
 

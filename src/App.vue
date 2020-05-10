@@ -20,19 +20,26 @@
                     <i class="yellow">art</i> event
                   </h2>
                 </div>
-                <div class="has-text-white">
+                <div class="has-text-white" style="text-align: center">
                   <transition
                     name="infosTransition"
                     mode="out-in"
                     enter-active-class="animated fadeIn"
                     leave-active-class="animated fadeOut"
                   >
-                    <span v-bind:key="langageIndex">{{infos}}</span>
+                    <span class="is-size-5-mobile is-size-4" v-bind:key="langageIndex">
+                      {{infos.a}}
+                      <br />
+                      {{infos.b}}
+                    </span>
                   </transition>
                 </div>
 
                 <div class="progress-wrapper">
-                  <div class="is-hidden-mobile animated fadeIn" style="height: 30vh">
+                  <div
+                    class="is-hidden-mobile animated fadeIn"
+                    style="height: 30vh; margin: 2em 0;"
+                  >
                     <l-map
                       id="mapSmall"
                       :zoom="zoomSmall"
@@ -41,22 +48,21 @@
                       ref="leafletmap"
                     >
                       <l-tile-layer :url="url"></l-tile-layer>
-                      <!-- <v-marker-cluster
-                        v-if="listFranckiss.length > 0"
-                        :options="franckissClusterOptions"
-                      >-->
                       <l-marker
                         v-for="markFranckiss in listFranckiss"
                         :key="markFranckiss.id"
                         :lat-lng="markFranckiss.location"
                         :icon="franckissIcon"
                       ></l-marker>
-                      <!-- </v-marker-cluster> -->
                     </l-map>
                   </div>
                   <div>
-                    <span>Already</span>
-                    <div v-if="listFranckiss.length > 0" style="display: inline-block">
+                    <div class="has-text-centered">
+                      <span
+                        class="is-size-5-mobile is-size-4 has-text-white"
+                      >Realtime Franckiss Counter</span>
+                    </div>
+                    <div v-if="listFranckiss.length > 0" class="has-text-centered">
                       <div
                         v-for="counterItem in totalNumberAsArray"
                         v-bind:key="counterItem.realIndex"
@@ -67,23 +73,22 @@
                             :key="'counterItemA-' + counterItem.realIndex"
                             v-if="counterItem.numberA != null"
                             style="display: block"
-                            class="has-text-white"
+                            class="has-text-white is-size-4-mobile is-size-4"
                           >{{counterItem.numberA}}</span>
                           <span
                             :key="'counterItemB-' + counterItem.realIndex"
                             v-else
                             style="display: block"
-                            class="has-text-white"
+                            class="has-text-white is-size-4-mobile is-size-4"
                           >{{counterItem.numberB}}</span>
                         </transition>
                       </div>
                     </div>
-                    <span>Franckiss downloaded!</span>
                   </div>
                 </div>
               </div>
               <div class="column">
-                <div class="subtitle has-text-centered has-text-white">
+                <div class="is-size-5-mobile is-size-4 has-text-centered has-text-white">
                   <i class="yellow">Click</i> on the Franckiss to join the event!
                 </div>
                 <figure class="image has-image-centered">
@@ -103,17 +108,12 @@
             <div class="box animated fadeIn" style="height: 60vh">
               <l-map :zoom="zoomLarge" :center="centerLarge" ref="leafletmap">
                 <l-tile-layer :url="url"></l-tile-layer>
-                <v-marker-cluster
-                  v-if="listFranckiss.length > 0"
-                  :options="franckissClusterOptions"
-                >
-                  <l-marker
-                    v-for="markFranckiss in listFranckiss"
-                    :key="markFranckiss.id"
-                    :lat-lng="markFranckiss.location"
-                    :icon="franckissIcon"
-                  ></l-marker>
-                </v-marker-cluster>
+                <l-marker
+                  v-for="markFranckiss in listFranckiss"
+                  :key="markFranckiss.id"
+                  :lat-lng="markFranckiss.location"
+                  :icon="franckissIcon"
+                ></l-marker>
               </l-map>
             </div>
             <div v-if="listFranckiss.length > 0" class="title is-3 has-text-centered">
@@ -145,7 +145,8 @@
             More informations on
             <a href="http://franckiss.art" target="_blank">
               <strong>FRANCKISS.art</strong>
-            </a> - A Miguel PIN.
+            </a> - A mon ami
+            <i>Miguel PIN</i>.
           </div>
         </div>
       </div>
@@ -155,9 +156,10 @@
 
 <script>
 import { LMap, LTileLayer } from "vue2-leaflet";
-import { icon, DivIcon, Point } from "leaflet";
+import { icon } from "leaflet";
 import { animated, getGeolocation } from "./utils";
 import FirebaseService from "./firebase.service";
+import firebaseService from "./firebase.service";
 
 class counterItem {
   constructor(realIndex) {
@@ -179,6 +181,31 @@ class counterItem {
   }
 }
 
+const listFranckissSounds = [
+  1,
+  2,
+  4,
+  5,
+  6,
+  7,
+  8,
+  9,
+  10,
+  11,
+  12,
+  13,
+  14,
+  15,
+  16,
+  17,
+  18,
+  19,
+  20,
+  21,
+  22,
+  23,
+  24
+];
 export default {
   components: {
     LMap,
@@ -211,31 +238,26 @@ export default {
       zoomSmall: 2,
       centerLarge: [47.41322, -1.219482],
       centerSmall: [34.991022, -33.871539],
-      franckissIcon: customicon,
-      franckissClusterOptions: {
-        showCoverageOnHover: false,
-        zoomToBoundsOnClick: false,
-        spiderfyOnMaxZoom: false,
-        removeOutsideVisibleBounds: true,
-        iconCreateFunction: function() {
-          return new DivIcon({
-            className: "franckissClusterGroupIcon",
-            iconSize: new Point(20, 20)
-          });
-        }
-      }
+      franckissIcon: customicon
     };
   },
   beforeCreate() {
     this.storageId = localStorage.getItem("franckissId");
     if (this.storageId) {
-      console.log("T'as déjà ton Franckiss!");
+      firebaseService
+        .getFranckiss(this.storageId)
+        .then(console.log)
+        .catch(() => {
+          console.log("T'as pas de franckiss!");
+          localStorage.removeItem("franckissId");
+          this.storageId = null;
+        });
     }
     setInterval(
       function() {
         this.langageIndex = (this.langageIndex + 1) % 3;
       }.bind(this),
-      3000
+      5000
     );
   },
   created() {
@@ -245,13 +267,25 @@ export default {
     infos: function() {
       switch (this.langageIndex) {
         case 0:
-          return "LOVE CAN'T WAIT LET'S COVER THE WORLD WITH KISSES";
+          return {
+            a: "LOVE CAN'T WAIT",
+            b: "LET'S COVER THE WORLD WITH KISSES"
+          };
         case 1:
-          return "L'AMOUR NE PEUT PAS ATTENDRE RECOUVRONS LE MONDE DE BAISERS";
+          return {
+            a: "L'AMOUR NE PEUT PAS ATTENDRE",
+            b: "RECOUVRONS LE MONDE DE BAISERS"
+          };
         case 2:
-          return "EL AMOR NO PUEDE ESPERAR MAS CUBRAMOS EL MUNDO CON BESOS";
+          return {
+            a: "EL AMOR NO PUEDE ESPERAR MAS",
+            b: "LLENEMOS EL MUNDO DE BESOS"
+          };
         default:
-          return "LOVE CAN'T WAIT LET'S COVER THE WORLD WITH KISSES";
+          return {
+            a: "LOVE CAN'T WAIT",
+            b: "LET'S COVER THE WORLD WITH KISSES"
+          };
       }
     }
   },
@@ -278,12 +312,30 @@ export default {
       }
     },
     selectFranckiss: function(event) {
-      animated(event.srcElement, ["tada", "slow"], this.downloadFranckiss);
+      const franckissSoundIndex = Math.floor(
+        Math.random() * listFranckissSounds.length
+      );
+      const audio = new Audio(
+        require(`@/assets/sounds/franckiss_${listFranckissSounds[franckissSoundIndex]}.mp4`)
+      );
+      let audioPromose = audio.play();
+      audioPromose.then(() => {
+        animated(event.srcElement, ["tada", "slow"], this.downloadFranckiss);
+      });
     },
     downloadFranckiss: async function() {
-      const coord = await getGeolocation();
+      let coord = null;
+      try {
+        coord = await this.$getLocation();
+      } catch (error) {
+        coord = await getGeolocation();
+      }
+
       const index = this.listFranckiss.length + 1;
-      let newDownload = await FirebaseService.createNewFranckiss(coord, index);
+      const newDownload = await FirebaseService.createNewFranckiss(
+        coord,
+        index
+      );
       localStorage.setItem("franckissId", newDownload.key);
       setTimeout(() => {
         this.storageId = newDownload.key;
@@ -310,10 +362,16 @@ export default {
   src: url("assets/fonts/Roboto/Roboto-Regular.ttf");
 }
 
-@media screen and (min-height: 900) {
+@media screen and (min-height: 900px) {
   html,
   body {
     overflow: hidden;
+  }
+}
+
+@media screen and (max-width: 800px) {
+  .image {
+    width: 80%;
   }
 }
 
@@ -340,15 +398,6 @@ a {
 .title-wrapper {
   font-family: "ITC_Kabel";
   margin: 2rem;
-}
-
-.infos-wrapper {
-  /* margin: 2rem 0;
-  padding-left: 4rem; */
-}
-
-.infos-wrapper > * {
-  /* margin-top: 1rem; */
 }
 
 #app {
@@ -385,7 +434,7 @@ a {
 .image-franckiss:hover {
   box-shadow: rgba(2, 8, 20, 0.1) 0px 0.35em 1.175em,
     rgba(2, 8, 20, 0.08) 0px 0.175em 0.5em;
-  transform: translateY(-5px) scale(1.1);
+  transform: translateY(-5px) scale(1.05);
   cursor: pointer;
 }
 

@@ -26,10 +26,24 @@ class FirebaseService {
         this.databaseDownloads.on("child_added", callback);
     }
 
+    getFranckiss(franckissId) {
+        return new Promise((resolve, reject) => {
+            firebase.database().ref("downloads/" + franckissId).once('value',
+                response => {
+                    let value = response.val();
+                    if (value) {
+                        resolve(value);
+                    } else {
+                        reject();
+                    }
+                }, reject);
+        })
+    }
+
     async createNewFranckiss({ lat, lng }, index) {
         const newFranckiss = this.databaseDownloads.push();
         return newFranckiss.set({
-            date: new Date().getTime(),
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
             location: { lat, lng },
             number: index
         })
