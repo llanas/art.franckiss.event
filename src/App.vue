@@ -4,10 +4,6 @@
       <div>
         <div v-if="storageId" class="hero-head">
           <h1 class="title has-text-white has-text-centered">Thanks for joining the Franckiss event</h1>
-          <h2 class="subtitle has-text-white has-text-centered">
-            You are the Franckiss n°
-            <i class="yellow">{{franckissNumber}}</i>
-          </h2>
         </div>
         <div class="hero-body" v-bind:style="[storageId ? {'height': '90vh'} : {'height': '96vh'}]">
           <div v-if="!storageId" class="container">
@@ -44,16 +40,22 @@
                       id="mapSmall"
                       :zoom="zoomSmall"
                       :center="centerSmall"
-                      :options="{ zoomControl: false, dragging: false }"
+                      :options="{ zoomControl: false, dragging: false, minZoom:2, maxZoom: 2 }"
                       ref="leafletmap"
                     >
                       <l-tile-layer :url="url"></l-tile-layer>
-                      <l-marker
-                        v-for="markFranckiss in listFranckiss"
-                        :key="markFranckiss.id"
-                        :lat-lng="markFranckiss.location"
-                        :icon="franckissIcon"
-                      ></l-marker>
+
+                      <v-marker-cluster
+                        v-if="listFranckiss.length > 0"
+                        :options="franckissClusterOptions"
+                      >
+                        <l-marker
+                          v-for="markFranckiss in listFranckiss"
+                          :key="markFranckiss.id"
+                          :lat-lng="markFranckiss.location"
+                          :icon="franckissIcon"
+                        ></l-marker>
+                      </v-marker-cluster>
                     </l-map>
                   </div>
                   <div>
@@ -89,7 +91,7 @@
               </div>
               <div class="column">
                 <div class="is-size-5-mobile is-size-4 has-text-centered has-text-white">
-                  <i class="yellow">Click</i> on the Franckiss to join the event!
+                  <i class="yellow clickHover">Click</i> on the Franckiss to join the event!
                 </div>
                 <figure class="image has-image-centered">
                   <img
@@ -105,15 +107,55 @@
             </div>
           </div>
           <div v-else class="container">
+            <div v-show="franckissLabel != null">
+              <transition
+                name="franckissLabelInput"
+                mode="out-in"
+                enter-active-class="animated fadeIn"
+                leave-active-class="animated fadeOut"
+              >
+                <div v-if="isNamed">
+                  <p class="is-size-5-mobile is-size-4 has-text-centered">
+                    Your Franckiss :
+                    <i class="yellow">{{franckissLabel}}</i> is the n°
+                    <i class="yellow">{{franckissNumber}}</i>
+                  </p>
+                </div>
+                <div v-else class="columns is-centered" style="margin-bottom: 2em">
+                  <div class="column is-half">
+                    <div class="field is-horizontal is-size-5-mobile is-size-4">
+                      <div class="field-label is-medium">
+                        <label class="label has-text-white">Rename your Franckiss :</label>
+                      </div>
+                      <div class="field is-grouped">
+                        <p class="control is-expand">
+                          <input class="input" type="text" v-model="franckissLabel" />
+                        </p>
+                        <p class="control">
+                          <button class="button is-primary" @click="updateFranckissLabel">Nommer</button>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </transition>
+            </div>
             <div class="box animated fadeIn" style="height: 60vh">
               <l-map :zoom="zoomLarge" :center="centerLarge" ref="leafletmap">
                 <l-tile-layer :url="url"></l-tile-layer>
-                <l-marker
-                  v-for="markFranckiss in listFranckiss"
-                  :key="markFranckiss.id"
-                  :lat-lng="markFranckiss.location"
-                  :icon="franckissIcon"
-                ></l-marker>
+                <v-marker-cluster
+                  v-if="listFranckiss.length > 0"
+                  :options="franckissClusterOptions"
+                >
+                  <l-marker
+                    v-for="markFranckiss in listFranckiss"
+                    :key="markFranckiss.id"
+                    :lat-lng="markFranckiss.location"
+                    :icon="franckissIcon"
+                  >
+                    <l-tooltip>{{markFranckiss.franckissLabel || 'Franckiss_' + markFranckiss.number}}</l-tooltip>
+                  </l-marker>
+                </v-marker-cluster>
               </l-map>
             </div>
             <div v-if="listFranckiss.length > 0" class="title is-3 has-text-centered">
@@ -156,7 +198,7 @@
 
 <script>
 import { LMap, LTileLayer } from "vue2-leaflet";
-import { icon } from "leaflet";
+import { icon, DivIcon, Point } from "leaflet";
 import { animated, getGeolocation } from "./utils";
 import FirebaseService from "./firebase.service";
 import firebaseService from "./firebase.service";
@@ -219,26 +261,61 @@ export default {
       iconSize: [20, 20]
     });
     return {
+      isNamed: true,
+      franckissLabel: null,
       langageIndex: 0,
       hoverFranckiss: false,
       totalNumberAsArray: [
-        new counterItem(7),
         new counterItem(6),
         new counterItem(5),
         new counterItem(4),
         new counterItem(3),
-        new counterItem(2),
         new counterItem(1)
       ],
       franckissNumber: null,
       storageId: this.storageId,
       listFranckiss: [],
       url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-      zoomLarge: 3,
+      zoomLarge: 2,
       zoomSmall: 2,
       centerLarge: [47.41322, -1.219482],
       centerSmall: [34.991022, -33.871539],
-      franckissIcon: customicon
+      franckissIcon: customicon,
+      franckissClusterOptions: {
+        showCoverageOnHover: false,
+        zoomToBoundsOnClick: false,
+        spiderfyOnMaxZoom: false,
+        removeOutsideVisibleBounds: true,
+        iconCreateFunction: function(clusters) {
+          let markerSize = null;
+          let percent =
+            clusters.getAllChildMarkers().length / this.listFranckiss.length;
+          if (percent <= 0.01) {
+            markerSize = 10;
+          } else if (percent < 0.02) {
+            markerSize = 15;
+          } else if (percent < 0.05) {
+            markerSize = 20;
+          } else if (percent < 0.1) {
+            markerSize = 30;
+          } else if (percent < 0.15) {
+            markerSize = 40;
+          } else if (percent < 0.2) {
+            markerSize = 50;
+          } else if (percent < 0.3) {
+            markerSize = 60;
+          } else {
+            markerSize = 70;
+          }
+          return new DivIcon({
+            iconUrl: require("@/assets/images/franckiss_orange_icon.png"),
+            className: "franckissClusterGroupIcon",
+            iconSize: new Point(markerSize, markerSize)
+          });
+        }.bind(this),
+        disableClusteringAtZoom: 17,
+        maxClusterRadius: 50
+      }
     };
   },
   beforeCreate() {
@@ -246,7 +323,22 @@ export default {
     if (this.storageId) {
       firebaseService
         .getFranckiss(this.storageId)
-        .then(console.log)
+        .then(response => {
+          const generatedLabel = `Franckiss_${response.number}`;
+          if (response.franckissLabel != null) {
+            this.franckissLabel = response.franckissLabel;
+            if (this.franckissLabel == generatedLabel) {
+              this.isNamed = false;
+            }
+          } else {
+            this.isNamed = false;
+            firebaseService
+              .setFranckissLabel(this.storageId, `Franckiss_${response.number}`)
+              .then(() => {
+                this.franckissLabel = `Franckiss_${response.number}`;
+              });
+          }
+        })
         .catch(() => {
           console.log("T'as pas de franckiss!");
           localStorage.removeItem("franckissId");
@@ -290,6 +382,13 @@ export default {
     }
   },
   methods: {
+    updateFranckissLabel: function() {
+      firebaseService
+        .setFranckissLabel(this.storageId, this.franckissLabel)
+        .then(() => {
+          this.isNamed = true;
+        });
+    },
     addNewFranckiss: function(newFranckiss) {
       const franckissData = newFranckiss.val();
       if (newFranckiss.key == this.storageId) {
@@ -297,7 +396,7 @@ export default {
       }
       this.listFranckiss.push(franckissData);
       let arrayNumbers = (this.listFranckiss.length + "")
-        .padStart(7, "0")
+        .padStart(5, "0")
         .split("");
       let startChangingIndex = this.totalNumberAsArray.length - 1;
       for (let i = 0; i < this.totalNumberAsArray.length; i++) {
@@ -340,6 +439,8 @@ export default {
       setTimeout(() => {
         this.storageId = newDownload.key;
         this.franckissNumber = index;
+        this.franckissLabel = "Franckiss_label";
+        this.isNamed = false;
         const link = document.createElement("a");
         link.href = document.getElementById("franckissImage").src;
         link.setAttribute("download", `franckiss_${this.franckissNumber}.jpg`); //or any other extension

@@ -40,12 +40,17 @@ class FirebaseService {
         })
     }
 
+    setFranckissLabel(franckissId, franckissLabel) {
+        return firebase.database().ref(`downloads/${franckissId}/franckissLabel`).set(franckissLabel);
+    }
+
     async createNewFranckiss({ lat, lng }, index) {
         const newFranckiss = this.databaseDownloads.push();
         return newFranckiss.set({
             timestamp: firebase.database.ServerValue.TIMESTAMP,
             location: { lat, lng },
-            number: index
+            number: index,
+            franckissLabel: `Franckiss_${index}`
         })
             .then(() => {
                 return newFranckiss;

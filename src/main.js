@@ -6,7 +6,7 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import Vue from 'vue';
 import VueGeolocation from 'vue-browser-geolocation';
 import Meta from 'vue-meta';
-import { LMap, LMarker, LPopup, LTileLayer } from 'vue2-leaflet';
+import { LMap, LMarker, LPopup, LTileLayer, LTooltip } from 'vue2-leaflet';
 import Vue2LeafletMarkerCluster from 'vue2-leaflet-markercluster';
 import { firestorePlugin } from 'vuefire';
 
@@ -26,6 +26,7 @@ Vue.component('l-map', LMap);
 Vue.component('l-tile-layer', LTileLayer);
 Vue.component('l-marker', LMarker);
 Vue.component('l-popup', LPopup);
+Vue.component('l-tooltip', LTooltip);
 
 Vue.config.productionTip = false
 
